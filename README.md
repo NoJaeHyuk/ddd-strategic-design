@@ -236,7 +236,7 @@ docker compose -p kitchenpos up -d
   - 주문유형(OrderType)을 가진다. 
     - 배달(DELIVERY), 포장(TAKEOUT), 매장식사(EAT_IN)
   - 주문 시 1개 이상의 주문정보(OrderLineItem)가 필요하다.
-    - 주문과 주문정보는 1:N 관계이다.ㅈㅈㅈㅈㅈㅈㅈㅈㅈ
+    - 주문과 주문정보는 1:N 관계이다.
     - 메뉴(Menu)와 메뉴에 대한 수량(quantity) 정보를 가진다.
     - 숨겨진 메뉴(undisplayed menu)는 선택할 수 없다.
   - 주문 시 주문상태(OrderStatus) 값을 가진다.  
