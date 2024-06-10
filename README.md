@@ -181,6 +181,8 @@ docker compose -p kitchenpos up -d
 - 속성 
   - 비속어(Profanity)가 포함되지 않는 이름(name)을 가진다. 
   - 0원 이상인 가격(price)을 가진다.
+  - 공통적으로 가격(price)는 원(won) 단위로 소수점 없이 1원 기준으로 표현한다. 
+    - BigDecimal을 이용해 long형 보다 큰 범위의 수의 값을 다루기 위해 사용한다.
 
 - 기능 
   - 상품을 등록(create)할 수 있다.
@@ -195,6 +197,7 @@ docker compose -p kitchenpos up -d
 - 속성 
   - 이름(name)을 비워 둘 수 없다.
   - 메뉴들을 묶는 단위로 사용된다.
+    - 메뉴그룹과 메뉴는 1:N 관계이다.
 
 - 기능 
   - 메뉴그룹을 등록(create)할 수 있다. 
@@ -205,6 +208,7 @@ docker compose -p kitchenpos up -d
 ### 메뉴(Menu)
 - 속성 
   - 1개 이상의 상품(Product)을 갖는다.
+    - 메뉴와 상품의 관계는 1:N 관계이다.
   - 상품의 수량(quantity)은 0이상이어야한다.
   - 특정 메뉴그룹(MenuGroup)의 포함되어야 한다.
   - 메뉴 노출 여부(display)를 지정할 수 있다.
@@ -231,7 +235,8 @@ docker compose -p kitchenpos up -d
 - 속성 
   - 주문유형(OrderType)을 가진다. 
     - 배달(DELIVERY), 포장(TAKEOUT), 매장식사(EAT_IN)
-  - 주문 시 1개 이상의 주문정보(OrderLine)가 필요하다.
+  - 주문 시 1개 이상의 주문정보(OrderLineItem)가 필요하다.
+    - 주문과 주문정보는 1:N 관계이다.ㅈㅈㅈㅈㅈㅈㅈㅈㅈ
     - 메뉴(Menu)와 메뉴에 대한 수량(quantity) 정보를 가진다.
     - 숨겨진 메뉴(undisplayed menu)는 선택할 수 없다.
   - 주문 시 주문상태(OrderStatus) 값을 가진다.  
@@ -274,6 +279,24 @@ docker compose -p kitchenpos up -d
     - 배달(DELIVERY)시 주문의 상태가 배달 완료(DELIVERED)여야만 한다.
     - 주문 상태(OrderStatus)는 주문 완료(COMPLETED) 상태가 된다.
 
+- 플로우 차트
+
+```mermaid
+flowchart LR
+    A[주문 접수 WAITING]
+    B[주문 수락 ACCEPTED]
+    C[서빙 완료 SERVED]
+    D[배달 시작 DELIVERING]
+    E[배달 완료 DELIVERED]
+    F[주문 완료 COMPLETED]
+
+    A -->|매장이 주문을 수락| B
+    B -->|배달 대행사로 요청| C
+    C -->|배달 대행사가 메뉴를 받아| D
+    D -->|주문자 주소지로 배달 시작| E
+    E -->|배달 완료| F
+``` 
+
 #### 주문 유형 - 포장(TAKEOUT)
 - 속성
   - 추가 입력 속성이 없다.
@@ -296,11 +319,26 @@ docker compose -p kitchenpos up -d
     - 상태가 서빙 완료(SERVED)여야만 한다.
     - 주문 상태(OrderStatus)는 주문 완료(COMPLETED) 상태가 된다.
 
+- 플로우 차트
+
+```mermaid
+flowchart LR
+A[주문 접수 WAITING]
+B[주문 수락 ACCEPTED]
+C[서빙 완료 SERVED]
+D[주문 완료 COMPLETED]
+
+    A -->|매장이 주문을 수락| B
+    B -->|손님에게 제공| C
+    C -->|손님이 메뉴를 가져감| D
+```
+
 #### 주문 유형 - 매장식사(EAT_IN)
 - 속성
   - 주문테이블(OrderTable)의 정보가 필요하다. 
     - 주문테이블은 착석테이블(SitingTable)상태여야한다.
     - 테이블의 방문한 손님 수(numberOfGuests)를 반영하여야한다.
+    - 주문과 주문테이블은 N:1 관계이다.
 
 - 기능
   - 주문을 접수(create)한다.
@@ -320,6 +358,21 @@ docker compose -p kitchenpos up -d
     - 주문 상태(OrderStatus)는 주문 완료(COMPLETED) 상태가 된다.
     - 주문 테이블이 빈 테이블(cleared table) 상태가 된다.
     - 주문 테이블의 손님 수(numberOfGuests)가 0으로 변경된다.
+
+- 플로우 차트
+
+```mermaid
+flowchart LR
+A[주문 접수 WAITING]
+B[주문 수락 ACCEPTED]
+C[서빙 완료 SERVED]
+D[주문 완료 COMPLETED]
+
+    A -->|매장이 주문을 수락| B
+    B -->|테이블에 제공| C
+    C -->|손님이 식사를 마침| D
+    D -->|테이블이 비워짐, 손님 수 0으로 변경| E[빈 테이블 CLEARED]
+```
 
 #### 매장식사(EAT_IN) 용 - 주문 테이블(OrderTable)
 - 속성
